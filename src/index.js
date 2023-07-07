@@ -28,6 +28,14 @@ function getImages(searchQuery, page, callback) {
     .searchImage(searchQuery, page)
     .then(function (response) {
       callback(response);
+      const { height: cardHeight } = document
+        .querySelector('.gallery')
+        .firstElementChild.getBoundingClientRect();
+
+      window.scrollBy({
+        top: cardHeight * 2,
+        behavior: 'smooth',
+      });
       isLoading = false;
     })
     .catch(function (error) {
@@ -46,15 +54,22 @@ function addPosts(data) {
 }
 
 function moreImages() {
-  if (isLoading) {
-    return;
+  const scrollPosition = window.pageYOffset;
+  const windowHeight = window.innerHeight;
+  const documentHeight = document.documentElement.scrollHeight;
+
+  if (scrollPosition + windowHeight >= documentHeight) {
+    if (isLoading) {
+      return;
+    }
+    isLoading = true;
+    if (checkRemainingImages()) {
+      // Notiflix.Notify.info('Pobieranie kolejnych zdjęć z bazy!');
+      getImages(searchQuery, ++pageImages, addPosts);
+      return;
+    }
+    Notiflix.Notify.info('Wyświetlono wszystkie zdjęcia z bazy!');
   }
-  isLoading = true;
-  if (checkRemainingImages()) {
-    getImages(searchQuery, ++pageImages, addPosts);
-    return;
-  }
-  Notiflix.Notify.info('Wyświetlono wszystkie zdjęcia z bazy!');
 }
 
 function searchImages(eve) {
@@ -101,4 +116,4 @@ function checkRemainingImages() {
 /************************************************************************************************************************************************/
 catApi.init();
 searchBtn.addEventListener('click', searchImages);
-document.addEventListener('scroll', _.throttle(moreImages, 1000));
+document.addEventListener('scroll', _.throttle(moreImages, 300));
