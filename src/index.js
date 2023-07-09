@@ -9,7 +9,7 @@ import Waypoint from 'waypoints/lib/noframework.waypoints.min.js';
 /************************************************************************************************************************************************/
 const gallery = document.querySelector('.gallery');
 const searchInput = document.querySelector('.search-form input');
-const searchBtn = document.querySelector('.search-form button');
+const searchForm = document.querySelector('.search-form');
 const lightbox = new SimpleLightbox('.photo-card a', {
   /* options */
 });
@@ -23,26 +23,25 @@ let searchQuery = null;
 let isLoading = false;
 
 /************************************************************************************************************************************************/
-function getImages(searchQuery, page, callback) {
-  catApi
-    .searchImage(searchQuery, page)
-    .then(function (response) {
-      callback(response);
-      const { height: cardHeight } = document
-        .querySelector('.gallery')
-        .firstElementChild.getBoundingClientRect();
+async function getImages(searchQuery, page, callback) {
+  try {
+    const answer = await catApi.searchImage(searchQuery, page);
+    callback(answer);
 
-      window.scrollBy({
-        top: cardHeight * 2,
-        behavior: 'smooth',
-      });
-      isLoading = false;
-    })
-    .catch(function (error) {
-      // handle error
-      Notiflix.Notify.failure(`Błąd wczytywania spróbuj jeszcze raz.`);
-      console.log(error);
+    const { height: cardHeight } = document
+      .querySelector('.gallery')
+      .firstElementChild.getBoundingClientRect();
+
+    window.scrollBy({
+      top: cardHeight * 2,
+      behavior: 'smooth',
     });
+
+    isLoading = false;
+  } catch (error) {
+    Notiflix.Notify.failure(`Błąd wczytywania spróbuj jeszcze raz.`);
+    console.log(error);
+  }
 }
 function displayImages(data) {
   foundImagesCount = data.totalHits;
@@ -52,26 +51,20 @@ function displayImages(data) {
 function addPosts(data) {
   createPostes(data.hits);
 }
-
 function moreImages() {
   const scrollPosition = window.pageYOffset;
   const windowHeight = window.innerHeight;
   const documentHeight = document.documentElement.scrollHeight;
 
-  if (scrollPosition + windowHeight >= documentHeight) {
-    if (isLoading) {
-      return;
-    }
-    isLoading = true;
-    if (checkRemainingImages()) {
-      // Notiflix.Notify.info('Pobieranie kolejnych zdjęć z bazy!');
-      getImages(searchQuery, ++pageImages, addPosts);
-      return;
-    }
-    Notiflix.Notify.info('Wyświetlono wszystkie zdjęcia z bazy!');
-  }
-}
+  if (!(scrollPosition + windowHeight >= documentHeight) || isLoading) return;
 
+  isLoading = true;
+  if (checkRemainingImages()) {
+    getImages(searchQuery, ++pageImages, addPosts);
+    return;
+  }
+  Notiflix.Notify.info('Wyświetlono wszystkie zdjęcia z bazy!');
+}
 function searchImages(eve) {
   eve.preventDefault();
   pageImages = 1;
@@ -115,5 +108,5 @@ function checkRemainingImages() {
 }
 /************************************************************************************************************************************************/
 catApi.init();
-searchBtn.addEventListener('click', searchImages);
+searchForm.addEventListener('submit', searchImages);
 document.addEventListener('scroll', _.throttle(moreImages, 300));

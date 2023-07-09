@@ -11,13 +11,9 @@ export function init(api_key) {
   axios.defaults.headers.common['x-api-key'] = api_key;
 }
 export async function searchImage(query, page) {
-  try {
-    const url = `${urlApi}?key=${apiKey}&q=${encodeURIComponent(
-      query
-    )}&page=${page}&per_page=20&image_type=photo&orientation=horizontal&safesearch=true`;
-    const response = await axios.get(url);
-    return response.data;
-  } catch (error) {
-    console.log(error.message);
-  }
+  const url = `${urlApi}?key=${apiKey}&q=${encodeURIComponent(
+    query
+  )}&page=${page}&per_page=20&image_type=photo&orientation=horizontal&safesearch=true`;
+  const response = await axios.get(url);
+  return response.data;
 }
